@@ -34,11 +34,17 @@ function App() {
         const cameras = await QRScanner.getCameras()
         setCameraOptions(cameras)
 
-        if (cameras.length > 0) {
-          setSelectedCameraId(cameras[0].id)
+        const rearCamera = cameras.find((camera) =>
+          /back|rear|environment/i.test(camera.label),
+        )
+        const initialCamera = rearCamera ?? cameras.at(-1)
+
+        if (!initialCamera) {
+          throw new Error('No camera was found on this device.')
         }
 
-        await scanner.start({ facingMode: 'environment' })
+        setSelectedCameraId(initialCamera.id)
+        await scanner.start(initialCamera.id)
         setIsScanning(true)
         setIsPaused(false)
         setStatus('Point the camera at a code or upload an image.')
