@@ -6,6 +6,8 @@ function App() {
   const scannerRef = useRef(null)
   const [status, setStatus] = useState('Requesting camera access...')
   const [result, setResult] = useState('No code scanned yet')
+  const [hasResult, setHasResult] = useState(false)
+  const [copyStatus, setCopyStatus] = useState('idle')
   const [isScanning, setIsScanning] = useState(false)
   const [isPaused, setIsPaused] = useState(false)
   const [cameraOptions, setCameraOptions] = useState([])
@@ -27,6 +29,8 @@ function App() {
       elementId: 'reader',
       onScan: (value) => {
         setResult(value)
+        setHasResult(true)
+        setCopyStatus('idle')
         setStatus('Code scanned successfully.')
         setIsScanning(false)
         setIsPaused(true)
@@ -113,10 +117,23 @@ function App() {
 
       const scannedValue = await scannerRef.current.scanFile(file)
       setResult(scannedValue)
+      setHasResult(true)
+      setCopyStatus('idle')
       setStatus('Code scanned successfully.')
       setIsPaused(true)
     } catch (error) {
       setStatus(error?.message || 'No readable QR code or barcode was found in the selected image.')
+    }
+  }
+
+  const handleCopyResult = async () => {
+    if (!hasResult) return
+
+    try {
+      await navigator.clipboard.writeText(result)
+      setCopyStatus('copied')
+    } catch {
+      setCopyStatus('error')
     }
   }
 
@@ -166,8 +183,21 @@ function App() {
 
       <section className="result-panel">
         <p className="eyebrow">LATEST SCAN</p>
-        <h2>Scanned result</h2>
+        <div className="result-header">
+          <h2>Scanned result</h2>
+          <button
+            type="button"
+            className="copy-button"
+            onClick={handleCopyResult}
+            disabled={!hasResult}
+          >
+            {copyStatus === 'copied' ? 'Copied!' : 'Copy'}
+          </button>
+        </div>
         <div className="result-box">{result}</div>
+        {copyStatus === 'error' && (
+          <p className="copy-error" role="alert">Could not copy the result.</p>
+        )}
       </section>
     </main>
   )
