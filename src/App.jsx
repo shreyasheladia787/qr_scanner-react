@@ -11,6 +11,16 @@ function App() {
   const [cameraOptions, setCameraOptions] = useState([])
   const [selectedCameraId, setSelectedCameraId] = useState('')
 
+  const syncSelectedCamera = () => {
+    const activeCameraId = document
+      .querySelector('#reader video')
+      ?.srcObject?.getVideoTracks()[0]
+      ?.getSettings().deviceId
+
+    if (activeCameraId) {
+      setSelectedCameraId(activeCameraId)
+    }
+  }
 
   useEffect(() => {
     const scanner = new QRScanner({
@@ -45,6 +55,7 @@ function App() {
 
         setSelectedCameraId(initialCamera.id)
         await scanner.start(initialCamera.id)
+        syncSelectedCamera()
         setIsScanning(true)
         setIsPaused(false)
         setStatus('Point the camera at a code or upload an image.')
@@ -83,6 +94,7 @@ function App() {
       setIsScanning(false)
       setIsPaused(false)
       await scannerRef.current?.start(nextCameraId)
+      syncSelectedCamera()
       setIsScanning(true)
       setStatus('Camera switched.')
     } catch (error) {
